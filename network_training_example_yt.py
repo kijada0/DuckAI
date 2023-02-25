@@ -1,3 +1,7 @@
+# -------------------------------------------------------------------------------- #
+# Code source:  https://www.youtube.com/watch?v=eR5ZnFWekNQ
+# -------------------------------------------------------------------------------- #
+
 import os
 import tensorflow as tf
 from tensorflow import keras
@@ -12,20 +16,9 @@ import matplotlib.pyplot as plt
 # tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 dataset = keras.preprocessing.image_dataset_from_directory(
-    directory="image", label_mode=None, image_size=(64, 64), batch_size=132, shuffle=True
+    directory="image", label_mode=None, image_size=(64, 64), batch_size=256, shuffle=True
 )
-print(dataset)
 dataset.map(lambda x: x/255.0)
-
-exit()
-
-print("Dataset size:", len(list(dataset)))
-
-num_elements = 0
-for element in dataset:
-    num_elements += 1
-
-print(num_elements)
 
 discriminator = keras.Sequential(
     [
@@ -63,7 +56,7 @@ generator = keras.Sequential(
         layers.Conv2D(3, kernel_size=5, padding="same", activation="sigmoid"),
     ]
 )
-generator.summary()
+print(generator.summary())
 
 optimizer_generator = keras.optimizers.Adam(1e-4)
 optimizer_discriminator = keras.optimizers.Adam(1e-4)
