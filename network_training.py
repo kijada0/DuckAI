@@ -246,6 +246,7 @@ def log_data(dataset):
 
     if not os.path.exists(log_file_name):
         file = open(log_file_name, "w")
+        file.write("epoch; counter; processing time; losses discriminator; losses generator; \n")
         file.close()
 
     log_file = open(log_file_name, "a")
@@ -253,6 +254,5 @@ def log_data(dataset):
         log_file.write(str(data) + "; ")
     log_file.write("\n")
     log_file.close()
-
 
 main()
