@@ -12,13 +12,14 @@ source_path = "input_data/image"
 output_path = "output"
 model_path = "model"
 
+
 def main():
     # check_gpu()
     epoch = 1
 
     target_dir = create_output_directory(output_path, "out")
     model_dir = create_output_directory(model_path, "model")
-    dataset = load_dataset(source_path)
+    dataset = load_dataset(source_path, 16)
 
     discriminator, discriminator_optimizer = init_discriminator(model_path)
     generator, generator_optimizer = init_generator(model_path)
@@ -40,28 +41,18 @@ def train_network(discriminator, discriminator_optimizer, generator, generator_o
     latent_dimension = 128
     batch_size = len(dataset)
     counter = 0
+    set_size = 16
 
-    for real in dataset:
-        counter += 1
+    for real_set in dataset:
         time0 = datetime.datetime.now()
+        counter += 1
 
-        random_latent_vector = tf.random.normal(shape=(batch_size, latent_dimension))
+        random_latent_vector = tf.random.normal(shape=(set_size, latent_dimension))
         fake = generator(random_latent_vector)
-
-        if counter % 4 == 0:
-            image = keras.preprocessing.image.array_to_img(fake[0])
-            image_dir = f"{target_dir}/image_{epoch}_{counter}.png"
-            image.save(image_dir)
-
-            discriminator_path = os.path.join(model_dir, "discriminator.h5")
-            discriminator.save_weights(discriminator_path)
-
-            generator_path = os.path.join(model_dir, "generator.h5")
-            generator.save_weights(generator_path)
 
         # Train Discriminator
         with tf.GradientTape() as discriminator_tape:
-            losses_discriminator_real = loss_function(tf.ones((1, 1)), discriminator(real))
+            losses_discriminator_real = loss_function(tf.ones((1, 1)), discriminator(real_set))
             losses_discriminator_fake = loss_function(tf.zeros(1, 1), discriminator(fake))
             losses_discriminator = (losses_discriminator_real + losses_discriminator_fake) / 2
 
@@ -72,14 +63,30 @@ def train_network(discriminator, discriminator_optimizer, generator, generator_o
         with tf.GradientTape() as generator_tape:
             fake = generator(random_latent_vector)
             output = discriminator(fake)
-            losses_generator = loss_function(tf.ones(batch_size, 1), output)
+            losses_generator = loss_function(tf.ones(set_size, 1), output)
 
         grads = generator_tape.gradient(losses_generator, generator.trainable_weights)
         generator_optimizer.apply_gradients(zip(grads, generator.trainable_weights))
 
+        if counter % 10 == 0:
+            image = keras.preprocessing.image.array_to_img(fake[0])
+            image_dir = f"{target_dir}/image_{epoch}_{counter}.png"
+            image.save(image_dir)
+
+            discriminator_path = os.path.join(model_dir, "discriminator.h5")
+            discriminator.save_weights(discriminator_path)
+
+            generator_path = os.path.join(model_dir, "generator.h5")
+            generator.save_weights(generator_path)
+
+        loss_dis = str(round(tf.get_static_value(losses_discriminator), 3)).zfill(3)
+        loss_gen = str(round(tf.get_static_value(losses_generator), 3)).zfill(3)
+
         time_delta = round((datetime.datetime.now() - time0).total_seconds(), 1)
-        message = "Progress: {}/{} \t Processing time: {}".format(counter, batch_size, time_delta)
+        message = "Progress: {}/{} \t Processing time: {} \t Loss: {} {}".format(counter, batch_size, time_delta, loss_dis, loss_gen)
+        log_data([epoch, counter, time_delta, loss_dis, loss_gen])
         sys.stdout.write("\r" + message)
+
 
     print()
 
@@ -115,22 +122,22 @@ def save_results(generator, path):
 
 def init_discriminator(path):
     print("\nDiscriminator initialization ...")
-    model = keras.Sequential(
-        [
-            keras.Input(shape=(64, 64, 3)),
+    model = keras.Sequential()
 
-            layers.Conv2D(64, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
-            layers.Conv2D(128, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
-            layers.Conv2D(128, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
+    model.add(keras.Input(shape=(64, 64, 3)))
 
-            layers.Flatten(),
-            layers.Dropout(0.2),
-            layers.Dense(1, activation="sigmoid"),
-        ]
-    )
+    model.add(layers.Conv2D(64, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.LeakyReLU(0.2))
+    model.add(layers.Dropout(0.2))
+    model.add(layers.Conv2D(128, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.LeakyReLU(0.2))
+    model.add(layers.Dropout(0.2))
+    model.add(layers.Conv2D(128, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.LeakyReLU(0.2))
+    model.add(layers.Dropout(0.2))
+
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1, activation="sigmoid"))
 
     discriminator_path = os.path.join(path, "discriminator.h5")
     if os.path.exists(discriminator_path):
@@ -138,29 +145,33 @@ def init_discriminator(path):
         model.load_weights(discriminator_path)
 
     print(model.summary())
+
     optimizer = keras.optimizers.Adam(1e-4)
+    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+
     return model, optimizer
 
 
 def init_generator(path):
     print("\nGenerator initialization ...")
     latent_dimension = 128
-    model = keras.Sequential(
-        [
-            layers.Input(shape=(latent_dimension,)),
-            layers.Dense(8 * 8 * 128),
-            layers.Reshape((8, 8, 128)),
+    model = keras.Sequential()
 
-            layers.Conv2DTranspose(128, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
-            layers.Conv2DTranspose(256, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
-            layers.Conv2DTranspose(256, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
+    model.add(layers.Input(shape=(latent_dimension,)))
+    model.add(layers.Dense(8*8*128))
+    model.add(layers.Reshape((8, 8, 128)))
 
-            layers.Conv2D(3, kernel_size=5, padding="same", activation="sigmoid"),
-        ]
-    )
+    model.add(layers.Conv2DTranspose(128, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU(0.2))
+    model.add(layers.Conv2DTranspose(256, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU(0.2))
+    model.add(layers.Conv2DTranspose(512, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU(0.2))
+
+    model.add(layers.Conv2D(3, kernel_size=4, padding="same", activation="sigmoid"))
 
     generator_path = os.path.join(path, "generator.h5")
     if os.path.exists(generator_path):
@@ -187,6 +198,8 @@ def create_output_directory(path, dir_name):
     if not os.path.exists(path):
         os.mkdir(path)
 
+    clear_folder(path)
+
     time_now = datetime.datetime.now()
     new_dir_name = str(dir_name) + time_now.strftime("_%Y-%m-%d_%H-%M-%S")
 
@@ -197,11 +210,23 @@ def create_output_directory(path, dir_name):
     return new_dir_full_path
 
 
-def load_dataset(path):
+def clear_folder(path):
+    element_list = os.listdir(path)
+    for element in element_list:
+        element_path = os.path.join(path, element)
+        if os.path.isdir(element_path):
+            inner_list = os.listdir(element_path)
+            if not len(inner_list) > 0:
+                print("Removing:", element)
+                os.rmdir(element_path)
+
+
+def load_dataset(path, size):
     print("\nLoading dataset ...")
-    dataset = []
     file_list = os.listdir(path)
     map_func = lambda x: x / 255.0
+    dataset = []
+
     for file in file_list:
         if file.endswith(".jpg") or file.endswith(".png"):
             image_path = os.path.join(path, file)
@@ -214,6 +239,20 @@ def load_dataset(path):
     print("Dataset size:", len(dataset))
     dataset = np.array(dataset)
     return dataset
+
+
+def log_data(dataset):
+    log_file_name = "log.csv"
+
+    if not os.path.exists(log_file_name):
+        file = open(log_file_name, "w")
+        file.close()
+
+    log_file = open(log_file_name, "a")
+    for data in dataset:
+        log_file.write(str(data) + "; ")
+    log_file.write("\n")
+    log_file.close()
 
 
 main()

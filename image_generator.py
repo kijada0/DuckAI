@@ -34,22 +34,23 @@ def generate_image(generator, path):
 def init_generator(path):
     print("\nGenerator initialization ...")
     latent_dimension = 128
-    model = keras.Sequential(
-        [
-            layers.Input(shape=(latent_dimension,)),
-            layers.Dense(8 * 8 * 128),
-            layers.Reshape((8, 8, 128)),
+    model = keras.Sequential()
 
-            layers.Conv2DTranspose(128, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
-            layers.Conv2DTranspose(256, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
-            layers.Conv2DTranspose(256, kernel_size=4, strides=2, padding="same"),
-            layers.LeakyReLU(0.2),
+    model.add(layers.Input(shape=(latent_dimension,)))
+    model.add(layers.Dense(8*8*128))
+    model.add(layers.Reshape((8, 8, 128)))
 
-            layers.Conv2D(3, kernel_size=5, padding="same", activation="sigmoid"),
-        ]
-    )
+    model.add(layers.Conv2DTranspose(128, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU(0.2))
+    model.add(layers.Conv2DTranspose(256, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU(0.2))
+    model.add(layers.Conv2DTranspose(512, kernel_size=4, strides=2, padding="same"))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU(0.2))
+
+    model.add(layers.Conv2D(3, kernel_size=4, padding="same", activation="sigmoid"))
 
     generator_path = os.path.join(path, "generator.h5")
     if os.path.exists(generator_path):
