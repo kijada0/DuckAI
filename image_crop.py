@@ -5,8 +5,8 @@ import numpy as np
 width = 64
 height = width
 
-output_path = "image"
-input_path = "data/source_image"
+output_path = "input_data/image"
+input_path = "input_data/source_image"
 
 image_count = 1
 
