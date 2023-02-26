@@ -1,5 +1,6 @@
 import os
 import datetime
+import sys
 
 import tensorflow as tf
 from tensorflow import keras
@@ -12,22 +13,23 @@ def main():
     target_dir = create_output_directory(output_path)
     generator, generator_optimizer = init_generator(model_path)
 
-    for i in range(100):
+    for i in range(1000):
         generate_image(generator, target_dir)
 
 
 def generate_image(generator, path):
-    print("Image generation ...\t", end="")
+    time_now = datetime.datetime.now()
+    timestamp = time_now.strftime("%Y%m%d_%H%M%S_%f")
+    image_name = "image_{}.png".format(timestamp)
+
+    message = "Image generation ... \t " + image_name
+    sys.stdout.write("\r" + message)
+
     random_latent_vector = tf.random.normal(shape=(1, 128))
     fake = generator(random_latent_vector)
     image = keras.preprocessing.image.array_to_img(fake[0])
 
-    time_now = datetime.datetime.now()
-    timestamp = time_now.strftime("%Y%m%d_%H%M%S_%f")
-    image_name = "image_{}.png".format(timestamp)
-    print(image_name)
     image_path = os.path.join(path, image_name)
-
     image.save(image_path)
 
 

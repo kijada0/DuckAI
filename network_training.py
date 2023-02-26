@@ -10,7 +10,7 @@ from keras import layers
 
 source_path = "input_data/test_image"
 output_path = "output"
-model_path = "model"
+model_path = "model/backup/circle1"
 
 
 def main():
@@ -41,7 +41,7 @@ def train_network(discriminator, discriminator_optimizer, generator, generator_o
     latent_dimension = 128
     batch_size = len(dataset)
     counter = 0
-    set_size = 16
+    set_size = 32
 
     for real_set in dataset:
         time0 = datetime.datetime.now()

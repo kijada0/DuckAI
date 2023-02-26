@@ -28,7 +28,6 @@ def main():
                 if image_name.endswith(".png"):
                     image_path_list.append(os.path.join(element_path, image_name))
             image_path_list.sort(key=os.path.getmtime)
-            print(image_path_list)
 
             for image_path in image_path_list:
                 message = "Loading ... " + image_path
@@ -49,6 +48,6 @@ def main():
 
     print("Saving", frame_counter, "frames ...")
     gif = frames[0]
-    gif.save(gif_path, format="GIF", append_images=frames, save_all=True, duration=1, loop=0)
+    gif.save(gif_path, format="GIF", append_images=frames, save_all=True, duration=250, loop=0)
 
 main()
