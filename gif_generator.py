@@ -1,34 +1,42 @@
 import os
 import datetime
+import sys
 
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 
 output_path = "generator"
+gif_dir = "gif"
 model_path = "model"
 
 def main():
     target_dir = create_output_directory(output_path)
+    target_dir = create_output_directory(os.path.join(target_dir, gif_dir))
     generator, generator_optimizer = init_generator(model_path)
 
-    for i in range(100):
-        generate_image(generator, target_dir)
-
-
-def generate_image(generator, path):
-    print("Image generation ...\t", end="")
-    random_latent_vector = tf.random.normal(shape=(1, 128))
-    fake = generator(random_latent_vector)
-    image = keras.preprocessing.image.array_to_img(fake[0])
+    frames = []
+    for i in range(1000):
+        frames.append(generate_image(generator, i))
 
     time_now = datetime.datetime.now()
     timestamp = time_now.strftime("%Y%m%d_%H%M%S_%f")
-    image_name = "image_{}.png".format(timestamp)
-    print(image_name)
-    image_path = os.path.join(path, image_name)
+    gif_name = "gif_{}.gif".format(timestamp)
+    print(gif_name)
+    gif_path = os.path.join(target_dir, gif_name)
 
-    image.save(image_path)
+    gif = frames[0]
+    gif.save(gif_path, format="GIF", append_images=frames, save_all=True, duration=100, loop=0)
+
+
+def generate_image(generator, i):
+    message = "Image generation no. " + str(i)
+    sys.stdout.write("\r" + message)
+
+    random_latent_vector = tf.random.normal(shape=(1, 128))
+    fake = generator(random_latent_vector)
+    image = keras.preprocessing.image.array_to_img(fake[0])
+    return image
 
 
 def init_generator(path):

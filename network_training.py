@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 
-source_path = "input_data/image"
+source_path = "input_data/test_image"
 output_path = "output"
 model_path = "model"
 
