@@ -9,11 +9,12 @@ from keras import layers
 output_path = "generator"
 model_path = "model"
 
+
 def main():
     target_dir = create_output_directory(output_path)
     generator, generator_optimizer = init_generator(model_path)
 
-    for i in range(1000):
+    for i in range(100):
         generate_image(generator, target_dir)
 
 

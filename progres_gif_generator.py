@@ -5,6 +5,7 @@ import sys
 from PIL import Image
 
 data_path = "output/output_zielu"
+data_path = "generator/best/resize1"
 output_dir = "generator/gif"
 
 def main():

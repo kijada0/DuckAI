@@ -8,9 +8,9 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 
-source_path = "input_data/test_image"
+source_path = "input_data/image"
 output_path = "output"
-model_path = "model/backup/circle1"
+model_path = "model"
 
 
 def main():
@@ -254,5 +254,6 @@ def log_data(dataset):
         log_file.write(str(data) + "; ")
     log_file.write("\n")
     log_file.close()
+
 
 main()

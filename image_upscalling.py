@@ -5,11 +5,14 @@ import numpy as np
 import cv2
 
 source_path = "generator/best"
-output_dir = "resize"
+output_dir = "resize1"
 
 target_size = 1024
 
 target_path = os.path.join(source_path, output_dir)
+if not os.path.exists(target_path):
+    os.mkdir(target_path)
+
 image_list = os.listdir(source_path)
 
 for image_name in image_list:

@@ -66,9 +66,9 @@ def make_polygon(vertex, size):
 
 
 def get_color():
-    b = random.uniform(0.0, 0.5)
-    r = random.uniform(0.0, 0.5)
-    g = random.uniform(0.5, 1.0)
+    b = random.uniform(0.0, 1.0)
+    r = random.uniform(0.0, 1.0)
+    g = random.uniform(0.0, 1.0)
     return [b, g, r]
 
 
