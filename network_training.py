@@ -41,7 +41,7 @@ def train_network(discriminator, discriminator_optimizer, generator, generator_o
     latent_dimension = 128
     batch_size = len(dataset)
     counter = 0
-    set_size = 32
+    set_size = 16
 
     for real_set in dataset:
         time0 = datetime.datetime.now()
@@ -86,7 +86,6 @@ def train_network(discriminator, discriminator_optimizer, generator, generator_o
         message = "Progress: {}/{} \t Processing time: {} \t Loss: {} {}".format(counter, batch_size, time_delta, loss_dis, loss_gen)
         log_data([epoch, counter, time_delta, loss_dis, loss_gen])
         sys.stdout.write("\r" + message)
-
 
     print()
 

@@ -8,13 +8,20 @@ from keras import layers
 
 output_path = "generator"
 model_path = "model"
+output_to_new_folder = True
 
 
 def main():
     target_dir = create_output_directory(output_path)
+    if output_to_new_folder:
+        time_now = datetime.datetime.now()
+        timestamp = time_now.strftime("%Y-%m-%d_%H-%M-%S")
+        new_dir_name = "generator_{}".format(timestamp)
+        target_dir = create_output_directory(os.path.join(target_dir, new_dir_name))
+
     generator, generator_optimizer = init_generator(model_path)
 
-    for i in range(100):
+    for i in range(50):
         generate_image(generator, target_dir)
 
 
